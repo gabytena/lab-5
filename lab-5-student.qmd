@@ -1,6 +1,6 @@
 ---
 title: "Lab 5: Murder in SQL City"
-author: "Your name here!"
+author: "Gabriela Tena!"
 format: html
 editor: source
 embed-resources: true
@@ -56,7 +56,101 @@ Detective Wickham reaches out to you...
 
 ```{r}
 #| label: inspecting-crime-scene-report
+#finding the case from the police report
+crime_scene_report |>
+  filter(type == "murder",
+         city == "SQL City",
+         date == '20180115') |>
+  pull(description)
 
+
+  
+```
+
+## Witnesses
+```{r}
+#| label: finding-witnesses
+#identifying who the witnesses where
+
+person |>
+  filter(str_detect(address_street_name, 
+                    "Northwestern Dr") &
+           address_number == max(address_number)) |> 
+  bind_rows(person |> 
+      filter(str_detect(name, 
+                        "Annabel") &
+               str_detect(address_street_name, 
+                          "Franklin Ave"))) |>
+  pull(id)
+
+```
+
+
+## Witness Information
+```{r}
+#| label: interview-information
+#looking for witness statements
+interview |>
+  filter(person_id %in% c("14887", "16371")) |>
+  pull(transcript)
+
+
+```
+
+## Finding Suspect through Witness Statements
+```{r}
+#| label: analyzing-statements
+#analyzing the information given in interview
+
+get_fit_now_check_in |>
+  filter(check_in_date == "20180109") |>
+  right_join(
+    get_fit_now_member |>
+      filter(str_starts(id, "48Z") &
+             membership_status == "gold"),
+    by = join_by(membership_id == id)) |>
+  left_join(person,
+    by = join_by(person_id == id)) |>
+  inner_join(
+    drivers_license |>
+      filter(str_detect(plate_number, "H42W")),
+    by = join_by(license_id == id)) |>
+  select(name.x, name.y, person_id)
+
+
+```
+
+#https://chatgpt.com/share/671f25e2-b958-800c-879c-e4366f9cef63
+
+## Suspects Statement
+```{r}
+#| label: investigating-suspect
+#looking for suspect's interview
+interview |>
+  filter(person_id == "67318") |>
+  pull(transcript)
+
+```
+
+## Finding the Lady's Identity
+```{r}
+#| label: analyzing-suspect-statement
+#looking for suspect's interview
+facebook_event_checkin |>
+  mutate(date = ymd(date)) |>
+  filter(str_detect(event_name, "SQL Symphony"),
+         date %within% interval(ymd("20171201"), ymd("20171231"))) |>
+  group_by(person_id) |>
+  filter(n() >= 3) |>
+  ungroup() |>
+  select(person_id) |>
+  distinct() |>
+  left_join(person,
+            by = join_by(person_id == id)) |>
+  inner_join(drivers_license,
+             by = join_by(licence_id == id)) |>
+  pull(name)
+         
 ```
 
 
