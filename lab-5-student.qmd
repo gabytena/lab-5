@@ -1,9 +1,17 @@
 ---
 title: "Lab 5: Murder in SQL City"
 author: "Gabriela Tena!"
-format: html
+format: 
+  html:  
+    embed-resources: true
+    code-tools: true
+    toc: true
 editor: source
-embed-resources: true
+execute: 
+  echo: true
+warning: false
+message: false
+theme: spacelab
 ---
 
 For this lab, you will be joining and filtering related datasets to solve a murder mystery!
@@ -67,6 +75,11 @@ crime_scene_report |>
   
 ```
 
+
+**Follow the evidence to the person responsible for the murder, building a report as you go.**
+Hint: Make sure you check for interviews with any suspects!
+
+
 ## Witnesses
 ```{r}
 #| label: finding-witnesses
@@ -91,7 +104,8 @@ person |>
 #| label: interview-information
 #looking for witness statements
 interview |>
-  filter(person_id %in% c("14887", "16371")) |>
+  filter(person_id %in% c("14887", 
+                          "16371")) |>
   pull(transcript)
 
 
@@ -106,16 +120,20 @@ get_fit_now_check_in |>
   filter(check_in_date == "20180109") |>
   right_join(
     get_fit_now_member |>
-      filter(str_starts(id, "48Z") &
+      filter(
+        str_starts(id, "48Z") &
              membership_status == "gold"),
     by = join_by(membership_id == id)) |>
   left_join(person,
     by = join_by(person_id == id)) |>
   inner_join(
     drivers_license |>
-      filter(str_detect(plate_number, "H42W")),
+      filter(
+        str_detect(plate_number, "H42W")),
     by = join_by(license_id == id)) |>
-  select(name.x, name.y, person_id)
+  select(name.x, 
+         name.y, 
+         person_id)
 
 
 ```
@@ -138,8 +156,11 @@ interview |>
 #looking for suspect's interview
 facebook_event_checkin |>
   mutate(date = ymd(date)) |>
-  filter(str_detect(event_name, "SQL Symphony"),
-         date %within% interval(ymd("20171201"), ymd("20171231"))) |>
+  filter(
+    str_detect(
+      event_name, "SQL Symphony"),
+         date %within% interval(ymd("20171201"), 
+                                ymd("20171231"))) |>
   group_by(person_id) |>
   filter(n() >= 3) |>
   ungroup() |>
@@ -148,16 +169,15 @@ facebook_event_checkin |>
   left_join(person,
             by = join_by(person_id == id)) |>
   inner_join(drivers_license,
-             by = join_by(licence_id == id)) |>
+             by = join_by(license_id == id)) |>
   pull(name)
          
 ```
 
 
-**Follow the evidence to the person responsible for the murder, building a report as you go.**
-Hint: Make sure you check for interviews with any suspects!
-
 
 ## And the final suspect is...
+
+Miranda Priestly!
 
 *Put the name of the person responsible for the murder here:*
